@@ -4,8 +4,6 @@ import React, { useEffect, useState } from "react";
 import { LineChart, VwToPx, HistogramVer2, BarChart } from "../components";
 import axios from "axios";
 import { Paper, Grid } from "@mui/material";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase_set/firebase";
 
 import { useRouter } from "next/router";
 
@@ -84,7 +82,7 @@ interface UserInfoData {
 
 // とりあえずのuserID firebaseauthで取ってくる
 // const cooksensing_user_id = 5;
-const url = "http://localhost:8080";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 // 棒グラフ日付表示用の変換する関数を定義
 function formatDate(dateString: string): string {
@@ -157,14 +155,12 @@ const Graph: React.FC = () => {
     setDaysNum(Number(event.target.value)); // 選択された値を状態に反映
   };
 
-  //firebaseauthuidを使ってuserIDをとってくる
+  // localStorage から cooksensing_user_id を読み込み
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      console.log("011 Auth State Changed:", user);
-      if (typeof user?.uid === "string") {
-        setUid(user?.uid);
-      }
-    });
+    const storedId = localStorage.getItem("cooksensing_user_id");
+    if (storedId) {
+      setIdNumber(Number(storedId));
+    }
   }, []);
 
   useEffect(() => {
@@ -172,7 +168,7 @@ const Graph: React.FC = () => {
       if (uid !== "") {
         try {
           const response = await axios.post(
-            `${url}/users/search_user_by_firebase_auth_uid`,
+            `${apiBaseUrl}/users/search_user_by_firebase_auth_uid`,
             {
               firebase_auth_uid: uid,
             }
@@ -192,7 +188,7 @@ const Graph: React.FC = () => {
       try {
         // 折れ線グラフ用データ
         const response = await axios.post(
-          `${url}/feature_data/by_userid_within_days`,
+          `${apiBaseUrl}/feature_data/by_userid_within_days`,
           {
             user_id: cooksensing_user_id,
             days: daysNum,
@@ -208,7 +204,7 @@ const Graph: React.FC = () => {
 
       try {
         //棒グラフ用でデータ
-        const response = await axios.get(`${url}/best`);
+        const response = await axios.get(`${apiBaseUrl}/best`);
         setBestData(response.data.data);
         // console.log("Success:", response.data.data);
       } catch (error) {
@@ -217,7 +213,7 @@ const Graph: React.FC = () => {
 
       try {
         //ヒストグラム用でデータ
-        const response = await axios.get(`${url}/histogram`);
+        const response = await axios.get(`${apiBaseUrl}/histogram`);
         setHistogramData(response.data.data);
         // console.log("Success:", response.data.data);
       } catch (error) {
@@ -226,7 +222,7 @@ const Graph: React.FC = () => {
 
       try {
         //全員の平均データ
-        const response = await axios.get(`${url}/best/average`);
+        const response = await axios.get(`${apiBaseUrl}/best/average`);
         setAverageData(response.data);
         // console.log("Success:", response.data);
       } catch (error) {
@@ -235,7 +231,7 @@ const Graph: React.FC = () => {
 
       try {
         //全員の個人データ
-        const response = await axios.get(`${url}/users`);
+        const response = await axios.get(`${apiBaseUrl}/users`);
         setUsers(response.data.data);
         // console.log("Success:", response.data);
       } catch (error) {
@@ -668,6 +664,11 @@ const Graph: React.FC = () => {
   // users配列の中からidがcooksensing_user_idと一致するユーザーを探す
   const userdisp = users.find((user) => user.id === cooksensing_user_id);
 
+  const handleLogout = () => {
+    localStorage.removeItem("cooksensing_user_id");
+    router.push("/signin");
+  };
+
   return (
     <>
       <div style={{ textAlign: "center" }}>
@@ -689,8 +690,17 @@ const Graph: React.FC = () => {
             }}
           >
             <div style={{ textAlign: "right" }}>
-              <button onClick={() => router.push("/../test/Registration")}>
+              <button
+                onClick={() => router.push("/dataUpload")}
+                style={{ margin: "0.8vw", padding: "0.8vw 1.6vw" }}
+              >
                 データ登録
+              </button>
+              <button
+                onClick={handleLogout}
+                style={{ margin: "0.8vw", padding: "0.8vw 1.6vw" }}
+              >
+                サインアウト
               </button>
             </div>
             {/* <div style={{ textAlign: "left" }}>

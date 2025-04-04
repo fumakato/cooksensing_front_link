@@ -1,5 +1,4 @@
-// pages/testlogin.tsx
-
+//signin.tsx
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
@@ -9,10 +8,12 @@ const LoginPage: React.FC = () => {
   const [uid, setUid] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
     const storedId = localStorage.getItem("cooksensing_user_id");
     if (storedId) {
-      router.push("/testsuccess");
+      router.push("/featureGraph");
     } else {
       setIsLoggedIn(false); // localStorageにIDがなければ選択肢を表示
     }
@@ -26,7 +27,8 @@ const LoginPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/users/search_user_by_name_and_firebase_auth_uid",
+        // "http://localhost:8080/users/search_user_by_name_and_firebase_auth_uid",
+        `${apiBaseUrl}/users/search_user_by_name_and_firebase_auth_uid`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -37,11 +39,11 @@ const LoginPage: React.FC = () => {
       if (response.ok) {
         const user = await response.json();
         localStorage.setItem("cooksensing_user_id", String(user.id));
-        alert(`ログイン成功：ID=${user.id}`);
-        router.push("/testsuccess");
+
+        router.push("/featureGraph");
       } else {
         const errorData = await response.json();
-        alert(`ログイン失敗: ${errorData.error}`);
+        alert("ログインに失敗しました");
       }
     } catch (error: any) {
       alert("通信エラーが発生しました: " + error.message);
@@ -50,7 +52,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div style={{ padding: "20px", maxWidth: "400px", margin: "auto" }}>
-      <h2>ログイン</h2>
+      <h2>サインイン</h2>
 
       <div style={{ marginBottom: "1rem" }}>
         <label>
@@ -59,7 +61,7 @@ const LoginPage: React.FC = () => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Taro"
+            placeholder="fuma"
             style={{ marginLeft: "10px" }}
           />
         </label>
@@ -67,28 +69,26 @@ const LoginPage: React.FC = () => {
 
       <div style={{ marginBottom: "1rem" }}>
         <label>
-          UID（テスト用）:
+          パスワード:
           <input
             type="text"
             value={uid}
             onChange={(e) => setUid(e.target.value)}
-            placeholder="uid-123456"
+            placeholder="2025"
             style={{ marginLeft: "10px" }}
           />
         </label>
       </div>
 
       <button onClick={handleLogin} style={{ padding: "10px 20px" }}>
-        ログイン
+        サインイン
       </button>
 
       {/* 登録ページへの案内 */}
       {!isLoggedIn && (
         <div style={{ marginTop: "2rem", textAlign: "center" }}>
           <p>未登録の方はこちらから</p>
-          <button onClick={() => router.push("/testregister")}>
-            ユーザー登録へ
-          </button>
+          <button onClick={() => router.push("/signup")}>サインアップ</button>
         </div>
       )}
     </div>

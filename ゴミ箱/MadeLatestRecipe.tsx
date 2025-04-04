@@ -13,7 +13,7 @@ import {
   ButtonBase,
   Box,
 } from "@mui/material";
-import { RecipeSmall } from "./";
+import { RecipeSmall } from "../components";
 import { useRouter } from "next/router";
 
 //コンポーネントの呼び出し元から送られてくる型

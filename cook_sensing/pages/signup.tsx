@@ -1,4 +1,4 @@
-// pages/testregister.tsx
+// pages/testregister.tsxああ
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -9,10 +9,12 @@ const TestRegister: React.FC = () => {
   const [uid, setUid] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
     const storedId = localStorage.getItem("cooksensing_user_id");
     if (storedId) {
-      router.push("/testsuccess");
+      router.push("/featureGraph");
     } else {
       setIsLoggedIn(false);
     }
@@ -25,18 +27,22 @@ const TestRegister: React.FC = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, firebase_auth_uid: uid }),
-      });
+      const response = await fetch(
+        // "http://localhost:8080/users",
+        `${apiBaseUrl}/users`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, firebase_auth_uid: uid }),
+        }
+      );
 
       const data: { id?: number; error?: string } = await response.json();
 
       if (response.ok && data.id) {
         localStorage.setItem("cooksensing_user_id", String(data.id));
-        alert(`ユーザー登録成功！ID=${data.id}`);
-        router.push("/testsuccess");
+        alert("ユーザー登録に成功しました");
+        router.push("/featureGraph");
       } else {
         alert(`エラー: ${data.error ?? "Unknown error"}`);
       }
@@ -47,7 +53,7 @@ const TestRegister: React.FC = () => {
 
   return (
     <div style={{ padding: "20px", maxWidth: "400px", margin: "auto" }}>
-      <h2>ユーザー登録</h2>
+      <h2>サインアップ</h2>
 
       <div style={{ marginBottom: "1rem" }}>
         <label>
@@ -64,26 +70,26 @@ const TestRegister: React.FC = () => {
 
       <div style={{ marginBottom: "1rem" }}>
         <label>
-          UID（テスト用）:
+          パスワード:
           <input
             type="text"
             value={uid}
             onChange={(e) => setUid(e.target.value)}
-            placeholder="0331"
+            placeholder="2025"
             style={{ marginLeft: "10px" }}
           />
         </label>
       </div>
 
       <button onClick={handleCreateUser} style={{ padding: "10px 20px" }}>
-        Create User
+        サインアップ
       </button>
 
       {/* ログインページへの案内 */}
       {!isLoggedIn && (
         <div style={{ marginTop: "2rem", textAlign: "center" }}>
           <p>すでに登録済みの方はこちら</p>
-          <button onClick={() => router.push("/testlogin")}>ログインへ</button>
+          <button onClick={() => router.push("/signin")}>サインイン</button>
         </div>
       )}
     </div>
