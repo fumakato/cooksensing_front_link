@@ -32,8 +32,9 @@ const DataUpload: React.FC = () => {
     setDate(now.toISOString().split("T")[0]);
 
     const fetchFileList = () => {
-      const username = "kajilab";
-      const password = "fN4#Xfh4nNa$3T@mhPlv";
+      const username = process.env.NEXT_PUBLIC_MINIO_USER;
+      const password = process.env.NEXT_PUBLIC_MINIO_PASS;
+      console.log(username, password);
       const token = Buffer.from(`${username}:${password}`, "utf8").toString(
         "base64"
       );
