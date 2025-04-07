@@ -13,6 +13,7 @@ const DataUpload: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [serverMessage, setServerMessage] = useState<string>("");
   const [cooksensing_user_id, setUserId] = useState<number | "">(0);
+  const [isLoading, setIsLoading] = useState(false); // ← 追加
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -66,13 +67,17 @@ const DataUpload: React.FC = () => {
 
   const handleSubmit = async () => {
     setServerMessage("");
+    setErrorMessage("");
+    setIsLoading(true); // ← ボタン無効化
     if (!date) {
       setErrorMessage("日付を選択してください");
+      setIsLoading(false); // ← エラー時に戻す
     } else if (filename === "") {
       setErrorMessage("ファイルを選択してください");
+      setIsLoading(false); // ← エラー時に戻す
     } else {
-      const username = "kajilab";
-      const password = "fN4#Xfh4nNa$3T@mhPlv";
+      const username = process.env.NEXT_PUBLIC_MINIO_USER;
+      const password = process.env.NEXT_PUBLIC_MINIO_PASS;
       const token = Buffer.from(`${username}:${password}`, "utf8").toString(
         "base64"
       );
@@ -94,9 +99,14 @@ const DataUpload: React.FC = () => {
 
         if (response.data && typeof response.data.url === "string") {
           setFileurl(response.data.url);
+        } else {
+          setErrorMessage("ファイルのURLが取得できませんでした");
+          setIsLoading(false); // ← 念のため
         }
       } catch (error) {
         console.error("ファイル取得エラー:", error);
+        setErrorMessage("ファイル取得中にエラーが発生しました");
+        setIsLoading(false); // ← 念のため
       }
     }
   };
@@ -130,10 +140,13 @@ const DataUpload: React.FC = () => {
           if (error.response) {
             const { code, error: message } = error.response.data;
             setServerMessage(`エラー: ${message} (コード: ${code})`);
+            setIsLoading(false); // ← 念のため
           } else {
             setServerMessage("不明なエラーが発生しました");
+            setIsLoading(false); // ← 念のため
           }
           console.error("送信中にエラーが発生しました", error);
+          setIsLoading(false); // ← 念のため
         }
       };
 
@@ -186,8 +199,12 @@ const DataUpload: React.FC = () => {
         </label>
       </div>
 
-      <button onClick={handleSubmit} style={{ padding: "10px 20px" }}>
-        データ登録
+      <button
+        onClick={handleSubmit}
+        style={{ padding: "10px 20px" }}
+        disabled={isLoading}
+      >
+        {isLoading ? "登録中..." : "データ登録"}
       </button>
     </div>
   );
