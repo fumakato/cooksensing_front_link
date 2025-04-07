@@ -73,7 +73,7 @@ const TestRegister: React.FC = () => {
             type="text"
             value={uid}
             onChange={(e) => setUid(e.target.value)}
-            placeholder="2025"
+            placeholder="fuma"
             style={{ marginLeft: "10px" }}
           />
         </label>
