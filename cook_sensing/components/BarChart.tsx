@@ -135,6 +135,8 @@ export const BarChart = ({
   youDataNumber = 2,
   averageDataNumber = 1,
 }: BarChartApiArg) => {
+  const rawFeatureData = [...featureData];
+
   const chartRef = useRef<ChartJSOrUndefined<"bar">>(null);
 
   useEffect(() => {
@@ -193,7 +195,7 @@ export const BarChart = ({
   const tooltipBackColor = "rgb(0,0,0,0.7)"; //黒
 
   //表示する範囲を決定(ヒストグラムのみ)
-  const validFeatureData = featureData.filter(
+  const validFeatureData = rawFeatureData.filter(
     (temp) => temp !== null
   ) as number[];
   const maxFeatureData = Math.max(...validFeatureData); //データの最大値
@@ -230,9 +232,12 @@ export const BarChart = ({
             const originalLabels =
               ChartJS.defaults.plugins.legend.labels.generateLabels(chart);
             // Dataset 1 の色を変更
-            originalLabels[0].fillStyle = youBackColor; // カスタム色
-            originalLabels[0].strokeStyle = youBorderColor; // カスタム色
-            originalLabels[0].lineWidth = originalLabels[0].lineWidth || 1; // デフォルトの枠線の太さ
+            if (originalLabels.length > 0) {
+              // エラーを防ぐためのチェック
+              originalLabels[0].fillStyle = youBackColor; // カスタム色
+              originalLabels[0].strokeStyle = youBorderColor; // カスタム色
+              originalLabels[0].lineWidth = originalLabels[0].lineWidth || 1; // デフォルトの枠線の太さ
+            }
             return originalLabels.concat([
               {
                 text: "みんな",
@@ -321,12 +326,14 @@ export const BarChart = ({
   //データの色を決める
   const borderColor: string[] = [];
   const backgroundColor: string[] = [];
-  for (var i = 0; i < featureData.length; i++) {
-    if (i == youDataNumber) {
+  for (var i = 0; i < rawFeatureData.length; i++) {
+    // if (i == youDataNumber) {
+    if (i === youDataNumber && i < rawFeatureData.length) {
       //自分のデータの色
       borderColor.push(youBorderColor);
       backgroundColor.push(youBackColor);
-    } else if (i == averageDataNumber) {
+      // } else if (i == averageDataNumber) {
+    } else if (i === averageDataNumber && i < rawFeatureData.length) {
       //平均のデータの色
       borderColor.push(averageBorderColor);
       backgroundColor.push(averageBackColor);
@@ -342,7 +349,7 @@ export const BarChart = ({
     datasets: [
       {
         label: "あなた",
-        data: featureData,
+        data: rawFeatureData,
         borderColor: borderColor,
         backgroundColor: backgroundColor,
         borderWidth: borderWidth,
