@@ -20,7 +20,7 @@ interface UseFetchGraphDataProps {
   setHistogramData: Dispatch<SetStateAction<HistogramData[]>>;
 }
 
-export const useFetchGraphData = async ({
+export const fetchGraphData = async ({
   cooksensing_user_id,
   daysNum,
   apiBaseUrl = process.env.NEXT_PUBLIC_API_URL,

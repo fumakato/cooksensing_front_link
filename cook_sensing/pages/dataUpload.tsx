@@ -62,7 +62,7 @@ const DataUpload: React.FC = () => {
     };
 
     fetchFileList();
-  }, [router]);
+  }, [router, apiBaseUrl]);
 
   const handleSubmit = async () => {
     setServerMessage("");

@@ -1,6 +1,6 @@
 // Reactと各種フック、カスタムフック、コンポーネントのインポート
 import React, { useEffect, useState } from "react";
-import { useFetchGraphData } from "../hooks/useFetchGraphData"; // グラフ用データを取得するカスタムフック
+import { fetchGraphData } from "../hooks/fetchGraphData"; // グラフ用データを取得するカスタムフック
 import { LineChart, VwToPx, HistogramVer2, BarChart } from "../components"; // 表示コンポーネント
 import { useChartProps } from "../hooks/useChartProps"; // 各グラフ用のpropsを構築するカスタムフック
 import { Paper, Grid } from "@mui/material";
@@ -92,7 +92,7 @@ const Graph: React.FC = () => {
   useEffect(() => {
     if (typeof cooksensing_user_id === "number" && cooksensing_user_id > 0) {
       // 必要なデータ群をまとめて取得（カスタムフックで管理）
-      useFetchGraphData({
+      fetchGraphData({
         cooksensing_user_id, // ユーザーID（localStorageから取得）
         daysNum, // 対象とする日数（全体 or 絞り込み）
         setOptions, // 折れ線グラフ用データ格納
