@@ -1,12 +1,12 @@
-// Reactと各種フック、カスタムフック、コンポーネントのインポート
+//コンポーネントを利用した折れ線グラフの表示
+
 import React, { useEffect, useState } from "react";
-import { useFetchGraphData } from "../hooks/useFetchGraphData"; // グラフ用データを取得するカスタムフック
-import { LineChart, VwToPx, HistogramVer2, BarChart } from "../components"; // 表示コンポーネント
-import { useChartProps } from "../hooks/useChartProps"; // 各グラフ用のpropsを構築するカスタムフック
+import { LineChart, VwToPx, HistogramVer2, BarChart } from "../components";
+import axios from "axios";
 import { Paper, Grid } from "@mui/material";
+
 import { useRouter } from "next/router";
 
-// 型のインポート
 import {
   Option,
   AverageData,
@@ -17,46 +17,46 @@ import {
   DateEntry,
 } from "../types/graph";
 
-// APIのベースURL（環境変数から取得）
+// とりあえずのuserID firebaseauthで取ってくる
+// const cooksensing_user_id = 5;
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+// 棒グラフ日付表示用の変換する関数を定義
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const year = date.getFullYear().toString().slice(-2); // 年の下二桁を取得
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // 月は0から始まるので+1する
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}/${day}`;
+} // こいつは他ファイルに入れた方が見栄えが良い
 
 const Graph: React.FC = () => {
   const router = useRouter();
-
-  // 各種ステート定義（データ取得・加工・表示に関わるもの）
-  const [options, setOptions] = useState<Option[]>([]); // 折れ線グラフ用の元データ
-  const [date, setDate] = useState<string[]>([]); // 折れ線グラフX軸のラベル（日付）
-
-  // 折れ線グラフのY軸データ（ブレ、ペース）
+  // 変数定義
+  const [options, setOptions] = useState<Option[]>([]); // リストの中身
+  const [date, setDate] = useState<string[]>([]);
   const [accelerationStandardDeviation, setAccelerationStandardDeviation] =
     useState<(number | null)[]>([]);
   const [averagePaces, setAveragePaces] = useState<(number | null)[]>([]);
-
-  // 平均データ（全ユーザの平均）
   const [averageData, setAverageData] = useState<AverageData>({
     acceleration_standard_deviation: 0,
     average_pace: 0,
   });
-
-  // 棒グラフに必要なランキングデータ（全ユーザー分）
-  const [bestData, setBestData] = useState<UserData[]>([]);
+  const [bestData, setBestData] = useState<UserData[]>([]); // リストの中身
   const [bestAveragePace, setBestAveragePace] = useState<UserData[]>([]);
   const [
     bestAccelerationStandardDeviation,
     setBestAccelerationStandardDeviation,
   ] = useState<UserData[]>([]);
-
-  // 棒グラフでのユーザー自身や平均の順位番号（インデックス）
   const [barAccUserNumber, setBarAccUserNumber] = useState<number>(-1);
   const [barPaceUserNumber, setBarPaceUserNumber] = useState<number>(-1);
   const [barAccAverageNumber, setBarAccAverageNumber] = useState<number>(-1);
   const [barPaceAverageNumber, setBarPaceAverageNumber] = useState<number>(-1);
 
-  // 棒グラフのデータ配列
   const [barAccData, setBarAccData] = useState<number[]>([]);
   const [barPaceData, setBarPaceData] = useState<number[]>([]);
 
-  // ヒストグラム用の元データ（時間別分布）
+  // ヒストグラム
   const [histogramData, setHistogramData] = useState<HistogramData[]>([]);
   const [histogramAccFeatureData, setHistogramAccFeatureData] = useState<
     number[]
@@ -66,54 +66,129 @@ const Graph: React.FC = () => {
   >([]);
   const [histogramAccLabels, setHistogramAccLabels] = useState<string[]>([]);
   const [histogramPaceLabels, setHistogramPaceLabels] = useState<string[]>([]);
-
-  // ヒストグラム上でのユーザー自身の位置（インデックス）
   const [histogramAccUserNumber, setHistogramAccUserNumber] =
     useState<number>(-1);
   const [histogramPaceUserNumber, setHistogramPaceUserNumber] =
     useState<number>(-1);
+  //
+  const [daysNum, setDaysNum] = useState<number>(0);
 
-  const [daysNum, setDaysNum] = useState<number>(0); // 日数フィルター（折れ線グラフ用）
-
-  // デモ用のユーザーID（localStorageから取得）
+  // デモ用
   const [cooksensing_user_id, setIdNumber] = useState<number | "">(0);
+  // 数値が入力されたときに状態を更新する関数
+  const handleChange = (e: any) => {
+    const value = e.target.value;
+    // 数値として状態を更新する（空文字の処理も追加）
+    setIdNumber(value === "" ? "" : Number(value));
+  };
+  const [users, setUsers] = useState<UserInfoData[]>([]);
+  const [dispUser, setDispUser] = useState<string>("");
 
-  const [users, setUsers] = useState<UserInfoData[]>([]); // ユーザー一覧データ
+  //uid
+  const [uid, setUid] = useState<string>("");
 
-  // ステップ 1: localStorage から ID を取得
+  // 選択肢が変更されたときに状態を更新する関数
+  const handleChangeDays = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setDaysNum(Number(event.target.value)); // 選択された値を状態に反映
+  };
+
+  // localStorage から cooksensing_user_id を読み込み
   useEffect(() => {
     const storedId = localStorage.getItem("cooksensing_user_id");
     if (storedId) {
-      setIdNumber(Number(storedId)); // 文字列→数値に変換してセット
+      setIdNumber(Number(storedId));
     }
   }, []);
 
-  // ステップ 2: cooksensing_user_id が決まったら API 呼び出し
   useEffect(() => {
-    if (typeof cooksensing_user_id === "number" && cooksensing_user_id > 0) {
-      // 必要なデータ群をまとめて取得（カスタムフックで管理）
-      useFetchGraphData({
-        cooksensing_user_id, // ユーザーID（localStorageから取得）
-        daysNum, // 対象とする日数（全体 or 絞り込み）
-        setOptions, // 折れ線グラフ用データ格納
-        setBestData, // 棒グラフ用データ格納（個人）
-        setAverageData, // 平均データ格納
-        setUsers, // 全ユーザー情報格納
-        setHistogramData, // ヒストグラム用データ格納
-        apiBaseUrl, // APIのベースURL（.envから取得）
-      });
-    }
-  }, [cooksensing_user_id, daysNum]); // IDまたは日数変更時に再取得
+    const fetchData = async () => {
+      if (uid !== "") {
+        try {
+          const response = await axios.post(
+            `${apiBaseUrl}/users/search_user_by_firebase_auth_uid`,
+            {
+              firebase_auth_uid: uid,
+            }
+          ); // 必要なパラメータを指定
+          setIdNumber(response.data.id);
+        } catch (error) {
+          console.error("Error fetching data: ", error);
+        }
+      }
+    };
+    fetchData();
+  }, [uid]);
 
-  // 棒グラフデータに「全体平均（ダミーユーザー）」を追加
+  // APIからデータを取得する関数
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // 折れ線グラフ用データ
+        const response = await axios.post(
+          `${apiBaseUrl}/feature_data/by_userid_within_days`,
+          {
+            user_id: cooksensing_user_id,
+            days: daysNum,
+            // 0の場合は全ての日付で
+          }
+        ); // 必要なパラメータを指定
+        setOptions(response.data.data);
+        // console.log("by_userid_within_days:");
+        // console.log("Success:", response.data.data);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+
+      try {
+        //棒グラフ用でデータ
+        const response = await axios.get(`${apiBaseUrl}/best`);
+        setBestData(response.data.data);
+        // console.log("Success:", response.data.data);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+
+      try {
+        //ヒストグラム用でデータ
+        const response = await axios.get(`${apiBaseUrl}/histogram`);
+        setHistogramData(response.data.data);
+        // console.log("Success:", response.data.data);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+
+      try {
+        //全員の平均データ
+        const response = await axios.get(`${apiBaseUrl}/best/average`);
+        setAverageData(response.data);
+        // console.log("Success:", response.data);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+
+      try {
+        //全員の個人データ
+        const response = await axios.get(`${apiBaseUrl}/users`);
+        setUsers(response.data.data);
+        // console.log("Success:", response.data);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+      }
+    };
+    fetchData();
+    console.log("users");
+    console.log(users);
+  }, [cooksensing_user_id]);
+
+  // 棒グラフ用
   useEffect(() => {
     if (
-      // acceleration_standard_deviation が0でも有効データなので無視されている
+      // averageData.acceleration_standard_deviation !== 0 &&
       averageData.average_pace !== 0
     ) {
       if (bestData.length !== 0) {
-        const num = bestData.findIndex((item) => item.user_id === -100); // -100はダミーユーザーID
-        if (num === -1) {
+        const num = bestData.findIndex((item) => item.user_id === -100);
+        if (num == -1) {
           const bestAverage: UserData = {
             acceleration_standard_deviation:
               averageData.acceleration_standard_deviation,
@@ -125,69 +200,68 @@ const Graph: React.FC = () => {
             acceleration_std_dev_class: -1,
             average_pace_class: -1,
           };
-          // すでに平均データが含まれていなければ追加
+          // bestData.push(bestAverage);
+          // setBestData(bestData);
           setBestData([...bestData, bestAverage]);
         }
       }
     }
   }, [averageData, bestData]);
 
-  // bestDataが変更されたときに、並び替えて棒グラフ用の状態を作成
   useEffect(() => {
     const num = bestData.findIndex((item) => item.user_id === -100);
-    console.log(bestData);
     if (num !== -1) {
-      // ブレ順に降順ソート
+      // ソート　ブレ
       const sortedAccelerationData = [...bestData].sort(
         (a, b) =>
           b.acceleration_standard_deviation - a.acceleration_standard_deviation
       );
       setBestAccelerationStandardDeviation(sortedAccelerationData);
 
-      // ブレ値だけ取り出して配列化 → 棒グラフ用データ
       const accelerationStandardDeviations = sortedAccelerationData.map(
         (item) => item.acceleration_standard_deviation
       );
       setBarAccData(accelerationStandardDeviations);
 
-      // ペース順に昇順ソート
       const sortedPaceData = [...bestData].sort(
         (a, b) => a.average_pace - b.average_pace
       );
       setBestAveragePace(sortedPaceData);
 
-      // ペース値だけ取り出して配列化 → 棒グラフ用データ
+      // averagePaces
       const averagePaces = sortedPaceData.map((item) => item.average_pace);
       setBarPaceData(averagePaces);
     }
   }, [bestData]);
 
-  // 棒グラフ：個人と平均のインデックスを計算（ペース）
+  // 棒グラフ用
   useEffect(() => {
-    // 自分のデータの位置を取得
+    //Idを持つデータのインデックスを取得
     const index = bestAveragePace.findIndex(
       (item) => item.user_id === cooksensing_user_id
     );
+    // console.log("bestAveragePace");
+    // console.log(bestAveragePace);
     if (index !== -1) {
       setBarPaceUserNumber(index);
     }
-
-    // 平均（user_id: -100）の位置を取得
     const index2 = bestAveragePace.findIndex((item) => item.user_id === -100);
     if (index2 !== -1) {
       setBarPaceAverageNumber(index2);
     }
   }, [bestAveragePace]);
 
-  // 棒グラフ：個人と平均のインデックスを計算（ブレ）
+  // 棒グラフ用
   useEffect(() => {
+    //Idを持つデータのインデックスを取得
     const index3 = bestAccelerationStandardDeviation.findIndex(
       (item) => item.user_id === cooksensing_user_id
     );
+    // console.log("bestAccelerationStandardDeviation");
+    // console.log(bestAccelerationStandardDeviation);
     if (index3 !== -1) {
       setBarAccUserNumber(index3);
     }
-
     const index4 = bestAccelerationStandardDeviation.findIndex(
       (item) => item.user_id === -100
     );
@@ -195,6 +269,11 @@ const Graph: React.FC = () => {
       setBarAccAverageNumber(index4);
     }
   }, [bestAccelerationStandardDeviation]);
+
+  type DateEntry = {
+    date: string;
+    id: number | null;
+  };
 
   //ラベル関係を作る関数
   const fillDates = (data: Option[]): DateEntry[] => {
@@ -316,6 +395,23 @@ const Graph: React.FC = () => {
       const accelerationStandardDeviation =
         extractAccelerationStandardDeviation(filledDates, options);
       setAccelerationStandardDeviation(accelerationStandardDeviation);
+
+      // // averagePaces
+      // const averagePaces = options.map((option) => option.average_pace);
+      // setAveragePaces(averagePaces);
+
+      // // acceleration_standard_deviation
+      // const acceleration_standard_deviation = options.map(
+      //   (option) => option.acceleration_standard_deviation
+      // );
+      // setAccelerationStandardDeviation(acceleration_standard_deviation);
+
+      // // ラベル用の日付の抽出
+      // const date = options.map((option) => option.date);
+      // // console.log("date:", date);
+      // // ラベル用に文字列操作
+      // const formattedDates = date.map(formatDate);
+      // setDate(formattedDates);
     } else {
       console.error("options is not an array:", options);
     }
@@ -353,39 +449,43 @@ const Graph: React.FC = () => {
       });
       setHistogramPaceLabels(labels[0]);
       setHistogramAccLabels(labels[1]);
+      // console.log(labels[0]);
+      // console.log(labels[1]);
     }
   }, [histogramData]);
 
   // ヒストグラム用のユーザの番号算出(ブレ)
   useEffect(() => {
-    console.log("テスト");
-    console.log(barPaceUserNumber);
-    console.log(bestAveragePace[barPaceUserNumber]);
-    console.log("=== 自分のbestAveragePaceデータ ===");
-    console.dir(bestAveragePace[barPaceUserNumber], { depth: null });
     if (barAccUserNumber !== -1 && histogramAccLabels.length > 0) {
       const userAccelerationStandardDeviation =
         bestAccelerationStandardDeviation[barAccUserNumber]
           .acceleration_standard_deviation;
       const range = histogramData[1].range / 10;
-      for (let i = 0; i < histogramAccLabels.length; i++) {
-        const lower = Number(histogramAccLabels[i]);
-        const upper = lower + range;
-
-        if (
-          userAccelerationStandardDeviation >= lower &&
-          userAccelerationStandardDeviation <= upper
-        ) {
-          setHistogramAccUserNumber(i);
-          break; // 最初に見つけた階級で確定
+      histogramAccLabels.map((item, index) => {
+        // console.log(histogramData[1].min);
+        if (index == 0) {
+          if (
+            histogramData[1].min <= userAccelerationStandardDeviation &&
+            userAccelerationStandardDeviation <= histogramData[1].min + range
+          ) {
+            setHistogramAccUserNumber(index);
+          }
+        } else {
+          if (
+            Number(item) <= userAccelerationStandardDeviation &&
+            userAccelerationStandardDeviation <= Number(item) + range
+          ) {
+            setHistogramAccUserNumber(index);
+          }
         }
-      }
+      });
+      // console.log(range);
+      // console.log(Number(histogramAccLabels[9]) + range);
     }
   }, [histogramAccLabels, barAccUserNumber]);
 
   // ヒストグラム用のユーザの番号算出(ペース)
   useEffect(() => {
-    // console.log(barPaceUserNumber);
     if (barPaceUserNumber !== -1 && histogramPaceLabels.length > 0) {
       const userAveragePace = bestAveragePace[barPaceUserNumber].average_pace;
       const range = histogramData[0].range / 10;
@@ -409,49 +509,96 @@ const Graph: React.FC = () => {
     }
   }, [histogramPaceLabels, barPaceUserNumber]);
 
-  // histogramAccUserNumber が変更されたときのログ
-  useEffect(() => {
-    if (histogramAccUserNumber !== -1) {
-      console.log(
-        `ヒストグラム（ブレ）: あなたの階級インデックスが ${histogramAccUserNumber} に設定されました`
-      );
-    }
-  }, [histogramAccUserNumber]);
+  // 折れ線グラフ　ブレ
+  const vw = VwToPx(); //ex. 50 * vw で 50vw と同じ大きさのpxに変換
+  const size = 40 * vw;
+  const featureData = accelerationStandardDeviation; //データの配列
+  const average = averageData?.acceleration_standard_deviation; //平均
+  const mainTitle = "力のブレの大きさ -過去と比較-";
+  const xSubTitle = "日付";
+  const ySubTitle = "力のブレの大きさ(m/s^2)";
+  const labels = date; //ラベルの配列
+  const chartPropsAccelerationStandardDeviation = {
+    figureSize: size,
+    featureData: featureData,
+    average: average,
+    label: {
+      mainTitle: mainTitle,
+      xSubTitle: xSubTitle,
+      ySubTitle: ySubTitle,
+      labels: labels,
+    },
+  };
 
-  // histogramPaceUserNumber が変更されたときのログ
-  useEffect(() => {
-    if (histogramPaceUserNumber !== -1) {
-      console.log(
-        `ヒストグラム（ペース）: あなたの階級インデックスが ${histogramPaceUserNumber} に設定されました`
-      );
-    }
-  }, [histogramPaceUserNumber]);
+  // 折れ線グラフ　ペース
+  const featureData2 = averagePaces; //データの配列
+  const average2 = averageData?.average_pace; //平均
+  const mainTitle2 = "平均ペース -過去と比較-";
+  const ySubTitle2 = "平均ペース(回/s)";
+  const chartPropsAveragePace = {
+    figureSize: size,
+    featureData: featureData2,
+    average: average2,
+    label: {
+      mainTitle: mainTitle2,
+      xSubTitle: xSubTitle,
+      ySubTitle: ySubTitle2,
+      labels: labels,
+    },
+  };
 
-  const {
-    chartPropsAveragePace,
-    chartPropsAccelerationStandardDeviation,
-    barChartAccProps,
-    barChartPaceProps,
-    HistogramPaceProps,
-    HistogramAccProps,
-  } = useChartProps({
-    averageData,
-    date,
-    accelerationStandardDeviation,
-    averagePaces,
-    barAccData,
-    barPaceData,
-    barAccUserNumber,
-    barAccAverageNumber,
-    barPaceUserNumber,
-    barPaceAverageNumber,
-    histogramPaceFeatureData,
-    histogramPaceLabels,
-    histogramPaceUserNumber,
-    histogramAccFeatureData,
-    histogramAccLabels,
-    histogramAccUserNumber,
-  });
+  // 棒グラフ　ブレ
+  const barChartAccProps = {
+    figureSize: size,
+    featureData: barAccData,
+    label: {
+      mainTitle: "力のブレの大きさ -みんなと比較-",
+      ySubTitle: "力のブレの大きさ(m/s^2)",
+      labels: Array(barAccData.length).fill(""),
+    },
+    youDataNumber: barAccUserNumber,
+    averageDataNumber: barAccAverageNumber,
+  };
+
+  // 棒グラフ　ペース
+  const barChartPaceProps = {
+    figureSize: size,
+    featureData: barPaceData,
+    label: {
+      mainTitle: "平均ペース -みんなと比較-",
+      ySubTitle: "一秒間に切った回数(回/s)",
+      labels: Array(barPaceData.length).fill(""),
+    },
+    youDataNumber: barPaceUserNumber,
+    averageDataNumber: barPaceAverageNumber,
+  };
+
+  // ヒストグラム　ペース
+  const HistogramPaceProps = {
+    figureSize: size,
+    featureData: histogramPaceFeatureData,
+    label: {
+      mainTitle: "平均ペース -みんなとの比較-",
+      xSubTitle: "階級(回/s)",
+      ySubTitle: "人数(人)",
+      labels: histogramPaceLabels,
+    },
+    youDataNumber: histogramPaceUserNumber,
+  };
+
+  // [...array].reverse()
+  // ヒストグラム　ブレ
+  const HistogramAccProps = {
+    figureSize: size,
+    featureData: [...histogramAccFeatureData].reverse(),
+    label: {
+      mainTitle: "力のブレの大きさ -みんなと比較-",
+      xSubTitle: "階級 (m/s^2)",
+      ySubTitle: "人数(人)",
+      labels: [...histogramAccLabels].reverse(),
+    },
+    youDataNumber: 9 - histogramAccUserNumber,
+  };
 
   // users配列の中からidがcooksensing_user_idと一致するユーザーを探す
   const userdisp = users.find((user) => user.id === cooksensing_user_id);
@@ -495,6 +642,18 @@ const Graph: React.FC = () => {
                 サインアウト
               </button>
             </div>
+            {/* <div style={{ textAlign: "left" }}>
+              id=
+              <input
+                type="number"
+                value={cooksensing_user_id}
+                onChange={handleChange}
+                placeholder="Enter a number"
+                min={1} // 下限
+                // max={bestData.length - 1} // 上限
+              />
+            </div> */}
+
             <div>
               <label htmlFor="recipe">レシピを選択してください: </label>
               <select
@@ -517,6 +676,22 @@ const Graph: React.FC = () => {
 
             <br></br>
             <h2>{userdisp?.name} さんの きゅうりの輪切り 調理能力結果</h2>
+
+            <div>
+              <label htmlFor="timePeriod">期間を選択してください: </label>
+              <select
+                id="timePeriod"
+                value={daysNum}
+                onChange={handleChangeDays}
+              >
+                <option value={0}>全期間</option>
+                <option value={7}>1週間</option>
+                <option value={31}>1ヶ月</option>
+                <option value={91}>3ヶ月</option>
+                <option value={182}>半年</option>
+                <option value={365}>1年</option>
+              </select>
+            </div>
 
             <div
               style={{
