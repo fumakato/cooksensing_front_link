@@ -13,7 +13,7 @@ const DataUpload: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [serverMessage, setServerMessage] = useState<string>("");
   const [cooksensing_user_id, setUserId] = useState<number | "">(0);
-  const [isLoading, setIsLoading] = useState(false); // ← 追加
+  const [isLoading, setIsLoading] = useState(true); // ← 追加
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
 
