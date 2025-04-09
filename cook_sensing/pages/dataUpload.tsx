@@ -9,7 +9,10 @@ const DataUpload: React.FC = () => {
   const [time, setTime] = useState<string>("");
   const [filename, setFilename] = useState<string>("");
   const [fileurl, setFileurl] = useState<string>("");
-  const [fileList, setFileList] = useState<string[]>([]);
+  // const [fileList, setFileList] = useState<string[]>([]);
+  const [fileList, setFileList] = useState<{ label: string; value: string }[]>(
+    []
+  );
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [serverMessage, setServerMessage] = useState<string>("");
   const [cooksensing_user_id, setUserId] = useState<number | "">(0);
@@ -39,6 +42,12 @@ const DataUpload: React.FC = () => {
         "base64"
       );
 
+      interface FileItem {
+        label: string;
+        value: string;
+        sortKey: string;
+      }
+
       axios
         .post(
           "https://minio-api.kajilab.dev/api/object/list",
@@ -52,7 +61,46 @@ const DataUpload: React.FC = () => {
         )
         .then((response) => {
           if (Array.isArray(response.data.objects)) {
-            setFileList(response.data.objects);
+            const sortedFormatted: FileItem[] = (
+              response.data.objects as string[]
+            )
+              // ① 対象ファイル（_accg.csv）だけをフィルタリング
+              .filter((file) => file.endsWith("_accg.csv"))
+
+              // ② ファイル名から名前・日付・時刻を抽出＆整形
+              .map((file: string): FileItem => {
+                const match = file.match(
+                  /^(.+?)(20\d{2}-\d{2}-\d{2}) (\d{2}:\d{2}):\d{2}_accg\.csv$/
+                );
+
+                // 正規表現にマッチしなかった場合はスキップ対象に
+                if (!match) {
+                  return { label: file, value: file, sortKey: "" };
+                }
+
+                const name = match[1].trim(); // 名前（例: ふうま）
+                const date = match[2]; // 日付（例: 2025-04-07）
+                const time = match[3]; // 時刻（例: 11:19）
+                const sortKey = `${date} ${time}`; // ソート用キー（日時）
+
+                return {
+                  // 例: "ふうま ： 04-07 11:19"
+                  label: `${name} ： ${date.slice(5)} ${time}`,
+                  value: file,
+                  sortKey,
+                };
+              })
+
+              // ③ sortKeyが空（＝パース失敗）なものを除外
+              .filter((item: FileItem) => item.sortKey !== "")
+
+              // ④ 日時（sortKey）で降順ソート（新しい順）
+              .sort((a: FileItem, b: FileItem) =>
+                b.sortKey.localeCompare(a.sortKey)
+              );
+
+            // ⑤ 加工済みリストを state にセット
+            setFileList(sortedFormatted);
           } else {
             console.error("ファイルリスト形式エラー:", response.data);
           }
@@ -162,8 +210,8 @@ const DataUpload: React.FC = () => {
 
       <div style={{ marginBottom: "1rem" }}>
         <label>
-          行動データ:
-          <select
+          行動データ：
+          {/* <select
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
             style={{ marginLeft: "10px" }}
@@ -172,6 +220,17 @@ const DataUpload: React.FC = () => {
             {fileList.map((file) => (
               <option key={file} value={file}>
                 {file}
+              </option>
+            ))}
+          </select> */}
+          <select
+            value={filename}
+            onChange={(e) => setFilename(e.target.value)}
+          >
+            <option value="">Select a file</option>
+            {fileList.map((file) => (
+              <option key={file.value} value={file.value}>
+                {file.label}
               </option>
             ))}
           </select>

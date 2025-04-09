@@ -135,7 +135,7 @@ const Graph: React.FC = () => {
   // bestDataが変更されたときに、並び替えて棒グラフ用の状態を作成
   useEffect(() => {
     const num = bestData.findIndex((item) => item.user_id === -100);
-    console.log(bestData);
+    // console.log(bestData);
     if (num !== -1) {
       // ブレ順に降順ソート
       const sortedAccelerationData = [...bestData].sort(
@@ -199,7 +199,7 @@ const Graph: React.FC = () => {
   //ラベル関係を作る関数
   const fillDates = (data: Option[]): DateEntry[] => {
     // dateプロパティのみをDateオブジェクトに変換して配列に格納
-    console.log("ここ:", data);
+    // console.log("ここ:", data);
     const dateObjects = data.map((item) => {
       const date = new Date(item.date); // ISO形式の文字列をDateオブジェクトに変換
       return { original: item.date, date, id: item.id };
@@ -209,7 +209,7 @@ const Graph: React.FC = () => {
     dateObjects.sort((a, b) => a.date.getTime() - b.date.getTime());
 
     // 最古と最新の日付のみに注目
-    console.log("dateObjects:", dateObjects);
+    // console.log("dateObjects:", dateObjects);
     const startDate = dateObjects[0].date;
     const endDate = new Date(dateObjects[dateObjects.length - 1].date);
     endDate.setHours(23, 59, 59, 999); // 時間をその日の終わりに設定
@@ -304,7 +304,7 @@ const Graph: React.FC = () => {
   useEffect(() => {
     if (Array.isArray(options) && options.length > 0) {
       //上の関数を使用
-      console.log("options:", options);
+      // console.log("options:", options);
       const filledDates = fillDates(options);
 
       const dateTimesOnly = extractDateTimes(filledDates);
@@ -358,11 +358,11 @@ const Graph: React.FC = () => {
 
   // ヒストグラム用のユーザの番号算出(ブレ)
   useEffect(() => {
-    console.log("テスト");
-    console.log(barPaceUserNumber);
-    console.log(bestAveragePace[barPaceUserNumber]);
-    console.log("=== 自分のbestAveragePaceデータ ===");
-    console.dir(bestAveragePace[barPaceUserNumber], { depth: null });
+    // console.log("テスト");
+    // console.log(barPaceUserNumber);
+    // console.log(bestAveragePace[barPaceUserNumber]);
+    // console.log("=== 自分のbestAveragePaceデータ ===");
+    // console.dir(bestAveragePace[barPaceUserNumber], { depth: null });
     if (barAccUserNumber !== -1 && histogramAccLabels.length > 0) {
       const userAccelerationStandardDeviation =
         bestAccelerationStandardDeviation[barAccUserNumber]
@@ -412,18 +412,14 @@ const Graph: React.FC = () => {
   // histogramAccUserNumber が変更されたときのログ
   useEffect(() => {
     if (histogramAccUserNumber !== -1) {
-      console.log(
-        `ヒストグラム（ブレ）: あなたの階級インデックスが ${histogramAccUserNumber} に設定されました`
-      );
+      // console.log(`ヒストグラム（ブレ）: あなたの階級インデックスが ${histogramAccUserNumber} に設定されました`);
     }
   }, [histogramAccUserNumber]);
 
   // histogramPaceUserNumber が変更されたときのログ
   useEffect(() => {
     if (histogramPaceUserNumber !== -1) {
-      console.log(
-        `ヒストグラム（ペース）: あなたの階級インデックスが ${histogramPaceUserNumber} に設定されました`
-      );
+      // console.log(`ヒストグラム（ペース）: あなたの階級インデックスが ${histogramPaceUserNumber} に設定されました`);
     }
   }, [histogramPaceUserNumber]);
 
