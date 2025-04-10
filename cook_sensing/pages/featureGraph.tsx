@@ -199,10 +199,11 @@ const Graph: React.FC = () => {
   //ラベル関係を作る関数
   const fillDates = (data: Option[]): DateEntry[] => {
     // dateプロパティのみをDateオブジェクトに変換して配列に格納
-    // console.log("ここ:", data);
+    // 各オブジェクトの date プロパティを Date オブジェクトに変換し、その後 JST に変換して返す
     const dateObjects = data.map((item) => {
-      const date = new Date(item.date); // ISO形式の文字列をDateオブジェクトに変換
-      return { original: item.date, date, id: item.id };
+      const date = new Date(item.date); // ISO形式の文字列を Date オブジェクトに変換
+      const jstDate = new Date(date.getTime() - 9 * 60 * 60 * 1000); // UTC → JST: 9時間加算
+      return { original: item.date, date: jstDate, id: item.id };
     });
 
     // 昇順でソート
