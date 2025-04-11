@@ -48,6 +48,16 @@ const DataUpload: React.FC = () => {
         sortKey: string;
       }
 
+      axios.post(
+        "https://minio-api.kajilab.dev/api/object/list",
+        { bucket: "cucumber-slices", prefix: "" },
+        {
+          headers: {
+            Authorization: `Basic ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       axios
         .post(
           "https://minio-api.kajilab.dev/api/object/list",
@@ -66,35 +76,45 @@ const DataUpload: React.FC = () => {
             )
               // ① 対象ファイル（_accg.csv）だけをフィルタリング
               .filter((file) => file.endsWith("_accg.csv"))
-
               // ② ファイル名から名前・日付・時刻を抽出＆整形
               .map((file: string): FileItem => {
-                const match = file.match(
+                // まずコロン区切りのパターンでマッチを試みる
+                const colonMatch = file.match(
                   /^(.+?)(20\d{2}-\d{2}-\d{2}) (\d{2}:\d{2}):\d{2}_accg\.csv$/
                 );
-
-                // 正規表現にマッチしなかった場合はスキップ対象に
-                if (!match) {
-                  return { label: file, value: file, sortKey: "" };
+                if (colonMatch) {
+                  const name = colonMatch[1].trim(); // 名前部分（例: ふうま）
+                  const date = colonMatch[2]; // 日付部分（例: 2025-04-07）
+                  const time = colonMatch[3]; // 時刻部分（例: 17:38）
+                  const sortKey = `${date} ${time}`; // ソート用キー（日時）
+                  return {
+                    label: `${name} ： ${date.slice(5)} ${time}`, // 表示例: "ふうま ： 04-07 17:38"
+                    value: file,
+                    sortKey,
+                  };
                 }
-
-                const name = match[1].trim(); // 名前（例: ふうま）
-                const date = match[2]; // 日付（例: 2025-04-07）
-                const time = match[3]; // 時刻（例: 11:19）
-                const sortKey = `${date} ${time}`; // ソート用キー（日時）
-
-                return {
-                  // 例: "ふうま ： 04-07 11:19"
-                  label: `${name} ： ${date.slice(5)} ${time}`,
-                  value: file,
-                  sortKey,
-                };
+                // コロン区切りがマッチしなかった場合、アンダースコア区切りでマッチを試みる
+                const underscoreMatch = file.match(
+                  /^(.+?)(20\d{2}-\d{2}-\d{2}) (\d{2})_(\d{2})_(\d{2})_accg\.csv$/
+                );
+                if (underscoreMatch) {
+                  const name = underscoreMatch[1].trim(); // 名前部分（例: はやし）
+                  const date = underscoreMatch[2]; // 日付部分（例: 2025-04-11）
+                  // 時刻は、アンダースコアをコロンに置換してHH:mm形式にする（秒は無視）
+                  const time = `${underscoreMatch[3]}:${underscoreMatch[4]}`; // 例: "13:30"
+                  const sortKey = `${date} ${time}`; // ソート用キー（日時）
+                  return {
+                    label: `${name} ： ${date.slice(5)} ${time}`, // 表示例: "はやし ： 04-11 13:30"
+                    value: file,
+                    sortKey,
+                  };
+                }
+                // どちらのパターンにもマッチしなければ、sortKey を空にして後でフィルタリングされるようにする
+                return { label: file, value: file, sortKey: "" };
               })
-
-              // ③ sortKeyが空（＝パース失敗）なものを除外
+              // ③ sortKey が空（＝パースに失敗したファイル）なものを除外
               .filter((item: FileItem) => item.sortKey !== "")
-
-              // ④ 日時（sortKey）で降順ソート（新しい順）
+              // ④ 日時（sortKey）で降順ソート（新しい順に並ぶ）
               .sort((a: FileItem, b: FileItem) =>
                 b.sortKey.localeCompare(a.sortKey)
               );
