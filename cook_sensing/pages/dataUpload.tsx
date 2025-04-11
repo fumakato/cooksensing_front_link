@@ -78,48 +78,56 @@ const DataUpload: React.FC = () => {
               .filter((file) => file.endsWith("_accg.csv"))
               // ② ファイル名から名前・日付・時刻を抽出＆整形
               .map((file: string): FileItem => {
-                // まずコロン区切りのパターンでマッチを試みる
+                let name = "";
+                let dateStr = "";
+                let timeStr = "";
+                let sortKey = "";
+
+                // ③ まず、コロン区切りのパターンで試す（名前部はオプショナルにする）
                 const colonMatch = file.match(
-                  /^(.+?)(20\d{2}-\d{2}-\d{2}) (\d{2}:\d{2}):\d{2}_accg\.csv$/
+                  /^(.*?)(20\d{2}-\d{2}-\d{2}) (\d{2}:\d{2}):\d{2}_accg\.csv$/
                 );
                 if (colonMatch) {
-                  const name = colonMatch[1].trim(); // 名前部分（例: ふうま）
-                  const date = colonMatch[2]; // 日付部分（例: 2025-04-07）
-                  const time = colonMatch[3]; // 時刻部分（例: 17:38）
-                  const sortKey = `${date} ${time}`; // ソート用キー（日時）
-                  return {
-                    label: `${name} ： ${date.slice(5)} ${time}`, // 表示例: "ふうま ： 04-07 17:38"
-                    value: file,
-                    sortKey,
-                  };
+                  name = colonMatch[1].trim(); // 名前部分（存在しなければ空文字）
+                  dateStr = colonMatch[2]; // 日付部分（例: "2025-04-07"）
+                  timeStr = colonMatch[3]; // 時刻部分（例: "17:38"）
+                  sortKey = `${dateStr} ${timeStr}`; // ソート用キー
+                } else {
+                  // ④ 次に、アンダースコア区切りのパターンで試す（名前部はオプショナル）
+                  const underscoreMatch = file.match(
+                    /^(.*?)(20\d{2}-\d{2}-\d{2}) (\d{2})_(\d{2})_(\d{2})_accg\.csv$/
+                  );
+                  if (underscoreMatch) {
+                    name = underscoreMatch[1].trim();
+                    dateStr = underscoreMatch[2];
+                    // 時刻は各部分を ":" で結合。秒は表示しない
+                    timeStr = `${underscoreMatch[3]}:${underscoreMatch[4]}`;
+                    sortKey = `${dateStr} ${timeStr}`;
+                  } else {
+                    // ⑤ どちらのパターンにもマッチしなければ、sortKey は空文字にして後で除外
+                    return { label: file, value: file, sortKey: "" };
+                  }
                 }
-                // コロン区切りがマッチしなかった場合、アンダースコア区切りでマッチを試みる
-                const underscoreMatch = file.match(
-                  /^(.+?)(20\d{2}-\d{2}-\d{2}) (\d{2})_(\d{2})_(\d{2})_accg\.csv$/
-                );
-                if (underscoreMatch) {
-                  const name = underscoreMatch[1].trim(); // 名前部分（例: はやし）
-                  const date = underscoreMatch[2]; // 日付部分（例: 2025-04-11）
-                  // 時刻は、アンダースコアをコロンに置換してHH:mm形式にする（秒は無視）
-                  const time = `${underscoreMatch[3]}:${underscoreMatch[4]}`; // 例: "13:30"
-                  const sortKey = `${date} ${time}`; // ソート用キー（日時）
-                  return {
-                    label: `${name} ： ${date.slice(5)} ${time}`, // 表示例: "はやし ： 04-11 13:30"
-                    value: file,
-                    sortKey,
-                  };
-                }
-                // どちらのパターンにもマッチしなければ、sortKey を空にして後でフィルタリングされるようにする
-                return { label: file, value: file, sortKey: "" };
+
+                // ⑥ 表示ラベルを作成：名前があれば "名前 ： MM-DD HH:mm"、なければ "MM-DD HH:mm" とする
+                const label =
+                  name !== ""
+                    ? `${name} ： ${dateStr.slice(5)} ${timeStr}`
+                    : `${dateStr.slice(5)} ${timeStr}`;
+
+                return {
+                  label,
+                  value: file,
+                  sortKey,
+                };
               })
-              // ③ sortKey が空（＝パースに失敗したファイル）なものを除外
+              // ⑦ sortKey が空（＝パースに失敗したファイル）なものを除外
               .filter((item: FileItem) => item.sortKey !== "")
-              // ④ 日時（sortKey）で降順ソート（新しい順に並ぶ）
+              // ⑧ 日付＋時刻（sortKey）で降順ソート
               .sort((a: FileItem, b: FileItem) =>
                 b.sortKey.localeCompare(a.sortKey)
               );
 
-            // ⑤ 加工済みリストを state にセット
             setFileList(sortedFormatted);
           } else {
             console.error("ファイルリスト形式エラー:", response.data);
