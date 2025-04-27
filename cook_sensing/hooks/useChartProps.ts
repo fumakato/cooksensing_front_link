@@ -103,7 +103,7 @@ export const useChartProps = ({
     figureSize: size,
     featureData: [...histogramAccFeatureData].reverse(),
     label: {
-      mainTitle: "切る力のブレ -みんなと比較-",
+      mainTitle: "切る力のブレ -みんなの分布-",
       xSubTitle: "階級 (m/s^2)",
       ySubTitle: "人数(人)",
       labels: [...histogramAccLabels].reverse(),
