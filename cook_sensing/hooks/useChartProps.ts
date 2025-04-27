@@ -44,9 +44,9 @@ export const useChartProps = ({
     featureData: averagePaces,
     average: averageData.average_pace,
     label: {
-      mainTitle: "平均ペース -過去と比較-",
-      xSubTitle: "日付",
-      ySubTitle: "平均ペース(回/s)",
+      mainTitle: "切るペース -過去の自分と比較-",
+      xSubTitle: "日時",
+      ySubTitle: "一秒間に切った回数(回/s)",
       labels: date,
     },
   };
@@ -56,8 +56,8 @@ export const useChartProps = ({
     featureData: accelerationStandardDeviation,
     average: averageData.acceleration_standard_deviation,
     label: {
-      mainTitle: "力のブレの大きさ -過去と比較-",
-      xSubTitle: "日付",
+      mainTitle: "切る力のブレ -過去の自分と比較-",
+      xSubTitle: "日時",
       ySubTitle: "力のブレの大きさ(m/s^2)",
       labels: date,
     },
@@ -67,7 +67,7 @@ export const useChartProps = ({
     figureSize: size,
     featureData: barPaceData,
     label: {
-      mainTitle: "平均ペース -みんなと比較-",
+      mainTitle: "切るペース -みんなと比較-",
       ySubTitle: "一秒間に切った回数(回/s)",
       labels: Array(barPaceData.length).fill(""),
     },
@@ -79,7 +79,7 @@ export const useChartProps = ({
     figureSize: size,
     featureData: barAccData,
     label: {
-      mainTitle: "力のブレの大きさ -みんなと比較-",
+      mainTitle: "切る力のブレ -みんなと比較-",
       ySubTitle: "力のブレの大きさ(m/s^2)",
       labels: Array(barAccData.length).fill(""),
     },
@@ -91,7 +91,7 @@ export const useChartProps = ({
     figureSize: size,
     featureData: histogramPaceFeatureData,
     label: {
-      mainTitle: "平均ペース -みんなとの比較-",
+      mainTitle: "切るペース -みんなの分布-",
       xSubTitle: "階級(回/s)",
       ySubTitle: "人数(人)",
       labels: histogramPaceLabels,
@@ -103,7 +103,7 @@ export const useChartProps = ({
     figureSize: size,
     featureData: [...histogramAccFeatureData].reverse(),
     label: {
-      mainTitle: "力のブレの大きさ -みんなと比較-",
+      mainTitle: "切る力のブレ -みんなと比較-",
       xSubTitle: "階級 (m/s^2)",
       ySubTitle: "人数(人)",
       labels: [...histogramAccLabels].reverse(),

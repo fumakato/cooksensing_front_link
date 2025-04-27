@@ -511,10 +511,10 @@ const Graph: React.FC = () => {
                 [レシピを確認する]
               </a>
             </div>
-
             <br></br>
             <h2>{userdisp?.name} さんの きゅうりの輪切り 調理能力結果</h2>
-
+            <br></br>
+            <h3>切るペース：大きいほど良い</h3>
             <div
               style={{
                 display: "flex",
@@ -524,7 +524,6 @@ const Graph: React.FC = () => {
             >
               <LineChart {...chartPropsAveragePace} />
             </div>
-
             <div
               style={{
                 display: "flex",
@@ -547,7 +546,8 @@ const Graph: React.FC = () => {
               {userdisp?.name} さんの「1秒間に切った回数」：
               {bestAveragePace[barPaceUserNumber]?.average_pace}（回/s）
             </h4>
-
+            <br></br>
+            <h3>切る力のブレ：小さいほど良い</h3>
             <div
               style={{
                 display: "flex",
