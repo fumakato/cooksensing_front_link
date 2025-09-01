@@ -1,0 +1,145 @@
+{
+  "recipes": [
+    {
+      "recipeName": "カレー",
+      "steps": [
+        {
+          "name": "洗う",
+          "evaluations": [
+            { "label": "速さ", "value": 0.6, "unit": "m/s" },
+            { "label": "安定性", "value": 4.5, "unit": "" },
+            { "label": "綺麗さ", "value": 4.6, "unit": "点" },
+            { "label": "総合評価", "value": 4.3, "unit": "点" }
+          ]
+        },
+        {
+          "name": "皮剥き",
+          "evaluations": [
+            { "label": "速さ", "value": 3.2, "unit": "個/分" },
+            { "label": "安定性", "value": 4.2, "unit": "" },
+            { "label": "綺麗さ", "value": 4.1, "unit": "点" },
+            { "label": "総合評価", "value": 4.0, "unit": "点" }
+          ]
+        },
+        {
+          "name": "くし切り",
+          "evaluations": [
+            { "label": "速さ", "value": 2.7, "unit": "個/分" },
+            { "label": "安定性", "value": 4.4, "unit": "" },
+            { "label": "綺麗さ", "value": 4.4, "unit": "点" },
+            { "label": "総合評価", "value": 4.2, "unit": "点" }
+          ]
+        },
+        {
+          "name": "半月切り",
+          "evaluations": [
+            { "label": "速さ", "value": 2.5, "unit": "個/分" },
+            { "label": "安定性", "value": 4.0, "unit": "" },
+            { "label": "綺麗さ", "value": 4.0, "unit": "点" },
+            { "label": "総合評価", "value": 4.1, "unit": "点" }
+          ]
+        },
+        {
+          "name": "乱切り",
+          "evaluations": [
+            { "label": "速さ", "value": 2.9, "unit": "個/分" },
+            { "label": "安定性", "value": 3.8, "unit": "" },
+            { "label": "綺麗さ", "value": 3.8, "unit": "点" },
+            { "label": "総合評価", "value": 3.9, "unit": "点" }
+          ]
+        },
+        {
+          "name": "炒める",
+          "evaluations": [
+            { "label": "速さ", "value": 0.8, "unit": "m/s" },
+            { "label": "時間", "value": 150, "unit": "秒" },
+            { "label": "焦げ", "value": 0.5, "unit": "点" },
+            { "label": "総合評価", "value": 4.5, "unit": "点" }
+          ]
+        },
+        {
+          "name": "調味料の投入",
+          "evaluations": [
+            { "label": "量の正確性", "value": 97, "unit": "%" },
+            { "label": "手際の良さ", "value": 4.7, "unit": "点" },
+            { "label": "総合評価", "value": 4.6, "unit": "点" }
+          ]
+        },
+        {
+          "name": "煮込む",
+          "evaluations": [
+            { "label": "時間", "value": 1200, "unit": "秒" },
+            { "label": "火加減", "value": 3, "unit": "段階" },
+            { "label": "総合評価", "value": 4.4, "unit": "点" }
+          ]
+        }
+      ]
+    },
+    {
+      "recipeName": "肉じゃが",
+      "steps": [
+        {
+          "name": "洗う",
+          "evaluations": [
+            { "label": "速さ", "value": 0.5, "unit": "m/s" },
+            { "label": "安定性", "value": 4.3, "unit": "" },
+            { "label": "綺麗さ", "value": 4.7, "unit": "点" },
+            { "label": "総合評価", "value": 4.2, "unit": "点" }
+          ]
+        },
+        {
+          "name": "皮剥き",
+          "evaluations": [
+            { "label": "速さ", "value": 3.0, "unit": "個/分" },
+            { "label": "安定性", "value": 4.5, "unit": "" },
+            { "label": "綺麗さ", "value": 4.2, "unit": "点" },
+            { "label": "総合評価", "value": 4.1, "unit": "点" }
+          ]
+        },
+        {
+          "name": "くし切り",
+          "evaluations": [
+            { "label": "速さ", "value": 2.8, "unit": "個/分" },
+            { "label": "安定性", "value": 4.6, "unit": "" },
+            { "label": "綺麗さ", "value": 4.3, "unit": "点" },
+            { "label": "総合評価", "value": 4.2, "unit": "点" }
+          ]
+        },
+        {
+          "name": "乱切り",
+          "evaluations": [
+            { "label": "速さ", "value": 3.1, "unit": "個/分" },
+            { "label": "安定性", "value": 4.1, "unit": "" },
+            { "label": "綺麗さ", "value": 3.9, "unit": "点" },
+            { "label": "総合評価", "value": 4.0, "unit": "点" }
+          ]
+        },
+        {
+          "name": "炒める",
+          "evaluations": [
+            { "label": "速さ", "value": 0.7, "unit": "m/s" },
+            { "label": "時間", "value": 140, "unit": "秒" },
+            { "label": "焦げ", "value": 0.4, "unit": "点" },
+            { "label": "総合評価", "value": 4.3, "unit": "点" }
+          ]
+        },
+        {
+          "name": "調味料の投入",
+          "evaluations": [
+            { "label": "量の正確性", "value": 95, "unit": "%" },
+            { "label": "手際の良さ", "value": 4.6, "unit": "点" },
+            { "label": "総合評価", "value": 4.4, "unit": "点" }
+          ]
+        },
+        {
+          "name": "煮詰める",
+          "evaluations": [
+            { "label": "時間", "value": 1100, "unit": "秒" },
+            { "label": "火加減", "value": 4, "unit": "段階" },
+            { "label": "総合評価", "value": 4.5, "unit": "点" }
+          ]
+        }
+      ]
+    }
+  ]
+}
